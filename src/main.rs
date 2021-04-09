@@ -1,21 +1,23 @@
-mod variable;
-mod path;
 mod action;
 mod command;
+mod path;
 mod seamds;
+mod variable;
 
-use std::env;
-use std::process;
+use std::{env, process}; // NOTE(Able): This style to make code folding easy and also less repitition
 
-use lliw::{Style, Fg};
+use lliw::Fg;
+//use lliw::{Fg,Style}; // NOTE(Able): Commented out to reduce warnings
 
-use variable::Variable;
-use path::Path;
 use action::Action;
 use command::Command;
+use path::Path;
+use variable::Variable;
 
 fn main() {
-    let sea = Sea::new(Variable::load(), Path::new());
+    let variables = Variable::load(); // NOTE(Able): Split out because functions inside functions weird me out
+    let path = Path::new(); // NOTE(Able): Plus it also cuts down on repitition if you ever need to reuse those in main
+    let sea = Sea::new(variables, path);
 
     sea.run();
 }
@@ -31,7 +33,7 @@ impl Sea {
         Self {
             home: env::var("LOGNAME").unwrap(),
             vars,
-            path
+            path,
         }
     }
 
@@ -46,8 +48,14 @@ impl Sea {
 
             let acton: Action;
             match self.cmd(comd) {
-                Ok(a) => {acton = a; errstuffs = "".into()}
-                Err(e) => {acton = Action::Next(); errstuffs = e}
+                Ok(a) => {
+                    acton = a;
+                    errstuffs = "".into()
+                }
+                Err(e) => {
+                    acton = Action::Next();
+                    errstuffs = e
+                }
             }
 
             match acton {
@@ -59,23 +67,28 @@ impl Sea {
     }
 
     fn cmd(&self, command: Command) -> Result<Action, String> {
-
         match command.executable.as_str() {
             "cd" => return cd!("{}", command.arguments[0]),
             "exit" => return Ok(Action::Exit),
+            /*
+            // NOTE(Able): First attempt at adding a builtin command
+                        "path" => return self.path
+            */
             _ => (),
         }
 
         let mut child = match process::Command::new(&command.executable)
             .args(&command.arguments)
-            .spawn() {
-                Ok(c) => c,
-                Err(e) => {
-                    eprintln!("Error: {} not found in path", command.executable);
-                    return Err("seash code: 999".into())
-                }
+            .spawn()
+        {
+            Ok(c) => c,
+            Err(_e) => {
+                // TODO(Able): Handle this error in case its not an executable not found error
+                eprintln!("Error: {} not found in path", command.executable);
+                return Err("seash code: 999".into());
+            }
         };
-        
+
         let e = match child.wait() {
             Ok(c) => c,
             Err(e) => {
@@ -100,6 +113,8 @@ pub fn _input(text: std::fmt::Arguments) -> String {
     print!("{}", text);
     std::io::Write::flush(&mut std::io::stdout()).unwrap();
     let mut buf = String::new();
-    std::io::stdin().read_line(&mut buf).expect("failed to read stdin");
+    std::io::stdin()
+        .read_line(&mut buf)
+        .expect("failed to read stdin");
     buf.trim_end().to_string()
 }
