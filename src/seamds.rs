@@ -1,5 +1,4 @@
-use std::fmt::Arguments;
-use std::env;
+use std::{env, fmt::Arguments};
 
 use crate::action::Action;
 

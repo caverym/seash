@@ -1,7 +1,7 @@
 use std::env;
 
 pub struct Path {
-    paths: Vec<String>
+    paths: Vec<String>,
 }
 
 impl Path {
@@ -9,7 +9,10 @@ impl Path {
         // Read `PATH`, sets to `/bin` if can't read.
         let all = match env::var("PATH") {
             Ok(a) => a,
-            Err(e) => {eprintln!("Warning: {}", e); "/bin".into()}
+            Err(e) => {
+                eprintln!("Warning: {}", e);
+                "/bin".into()
+            }
         };
 
         // Split `PATH` into a vector.
