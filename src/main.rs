@@ -4,7 +4,7 @@ mod action;
 mod command;
 mod seamds;
 
-use std::env::{self, Vars};
+use std::env;
 use std::process;
 
 use lliw::{Style, Fg};
@@ -36,13 +36,13 @@ impl Sea {
     }
 
     fn run(self) {
-        let mut errstuffs: String = "0".into();
+        let mut errstuffs: String;
         loop {
             let comd: Command;
             let cdir = env::current_dir().unwrap();
             let dir = cdir.to_str().unwrap();
 
-            comd = Command::new(input!("{}@{}> ", self.home, dir));
+            comd = Command::new(input!("{}{}@{}{} > ", Fg::Cyan, self.home, dir, Fg::Reset));
 
             let acton: Action;
             match self.cmd(comd) {
@@ -71,7 +71,7 @@ impl Sea {
             .spawn() {
                 Ok(c) => c,
                 Err(e) => {
-                    eprintln!("Error: {}", e);
+                    eprintln!("Error: {} not found in path", command.executable);
                     return Err("seash code: 999".into())
                 }
         };

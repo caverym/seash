@@ -1,3 +1,6 @@
+use std::env;
+use std::fs;
+
 pub struct Variable {
     pub vec: Vec<[String;2]>
 }
