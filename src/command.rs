@@ -1,12 +1,12 @@
 pub struct Command {
     pub executable: String,
     pub arguments: Vec<String>,
-    args: bool,
+    // args: bool,
 }
 
 impl Command {
     pub fn new(input: String) -> Self {
-        let mut args = true;
+        let mut _args = true;
 
         // Split input into a vector.
         let mut arguments: Vec<&str> = input.split(' ').collect();
@@ -16,7 +16,7 @@ impl Command {
 
         // Check if there are any arguments to pass to the command.
         if arguments.len() < 2 {
-            args = false;
+            _args = false;
         }
 
         // Get the command.
@@ -25,7 +25,7 @@ impl Command {
         Self {
             executable: executable.into(),
             arguments: arguments.iter().map(|x| x.to_string()).collect(),
-            args
+            // args
         }
     }
 }

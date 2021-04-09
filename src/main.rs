@@ -2,51 +2,77 @@ mod variable;
 mod path;
 mod action;
 mod command;
+mod seamds;
 
-use std::process::{self, ExitStatus};
+use std::env::{self, Vars};
+use std::process;
+
+use lliw::{Style, Fg};
 
 use variable::Variable;
 use path::Path;
-// use action::Action;
+use action::Action;
 use command::Command;
 
 fn main() {
-    let sea = Sea::new(Path::new());
+    let sea = Sea::new(Variable::load(), Path::new());
 
     sea.run();
 }
 
 struct Sea {
-    // vars: Variable,
+    home: String,
+    vars: Variable,
     path: Path,
-    // command: Command,
 }
 
 impl Sea {
-    fn new(path: Path) -> Self {
+    fn new(vars: Variable, path: Path) -> Self {
         Self {
-            path: path,
+            home: env::var("LOGNAME").unwrap(),
+            vars,
+            path
         }
     }
 
     fn run(self) {
+        let mut errstuffs: String = "0".into();
         loop {
             let comd: Command;
-            comd = Command::new(input!("> "));
+            let cdir = env::current_dir().unwrap();
+            let dir = cdir.to_str().unwrap();
 
-            if let Err(e) = self.cmd(comd) {
+            comd = Command::new(input!("{}@{}> ", self.home, dir));
+
+            let acton: Action;
+            match self.cmd(comd) {
+                Ok(a) => {acton = a; errstuffs = "".into()}
+                Err(e) => {acton = Action::Next(); errstuffs = e}
+            }
+
+            match acton {
+                Action::Next() => print!("{}{}{} | ", Fg::Red, errstuffs, Fg::Reset),
+                Action::Execute => {}
+                Action::Exit => return,
             }
         }
     }
 
-    fn cmd(&self, command: Command) -> Result<(), String> {
+    fn cmd(&self, command: Command) -> Result<Action, String> {
+
+        match command.executable.as_str() {
+            "cd" => return cd!("{}", command.arguments[0]),
+            "exit" => return Ok(Action::Exit),
+            _ => (),
+        }
+
         let mut child = match process::Command::new(&command.executable)
             .args(&command.arguments)
             .spawn() {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("Error: {}", e);
-                    return Err("999".into())
+                    return Err("seash code: 999".into())
                 }
         };
         
@@ -61,7 +87,7 @@ impl Sea {
             return Err(e.to_string());
         }
 
-        Ok(())
+        Ok(Action::Execute)
     }
 }
 
